@@ -1,0 +1,20 @@
+# Dataset (download with the provided scripts)
+modanet_raw/
+modanet_yolo/
+
+# Training outputs / weights
+runs/
+*.pt
+*.onnx
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / IDE
+.idea/
+.vscode/
+desktop.ini
+Thumbs.db

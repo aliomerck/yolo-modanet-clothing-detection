@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FYND | Sosyal Moda & YZ Tanıma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Kararlılık için Lucide'in belirli bir sürümü -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Yazı Tipleri: Başlıklar için 'Outfit' (logo ile uyumlu), gövde metni için 'Inter' -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        black: '#000000',
+                        white: '#ffffff',
+                        'off-white': '#f8f8f8',
+                        'fashion-gray': '#1a1a1a',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Outfit', 'sans-serif'], 
+                    },
+                    animation: {
+                        'scan': 'scan 3s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        scan: {
+                            '0%': { top: '0%', opacity: '0' },
+                            '10%': { opacity: '1' },
+                            '90%': { opacity: '1' },
+                            '100%': { top: '100%', opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Özel Kaydırma Çubuğu */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ffffff; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #000000; 
+        }
+        
+        /* Akıcı Kaydırma */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Editoryal Tipografi Düzenlemeleri */
+        .editorial-text {
+            line-height: 0.95; 
+            letter-spacing: -0.04em; 
+        }
+
+        /* Görsel Gri Tonlama & Hover Efekti */
+        .fashion-img {
+            filter: grayscale(100%);
+            transition: filter 0.5s ease;
+        }
+        .fashion-img:hover {
+            filter: grayscale(0%);
+        }
+
+        /* YZ Etiketi */
+        .ai-tag {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        .fashion-img-container:hover .ai-tag {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* PARLAMA BUTONU ANİMASYONU - SAĞLAM UYGULAMA */
+        .shine-btn {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border-radius: 0.5rem;
+            /* İstifleme bağlamını sağla */
+            isolation: isolate; 
+        }
+
+        /* Dönen Gradyan (Parlama) */
+        .shine-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 400%; /* Dönüş sırasında köşeleri kaplamak için yeterince büyük */
+            height: 400%;
+            background: conic-gradient(
+                from 0deg, 
+                transparent 0%, 
+                transparent 70%, 
+                #ffffff 85%, 
+                #ffffff 100%
+            );
+            transform: translate(-50%, -50%) rotate(0deg);
+            z-index: -2; /* Siyah maskenin arkasında */
+            opacity: 0; /* Varsayılan olarak gizli */
+            transition: opacity 0.3s ease;
+        }
+
+        /* İç Siyah Maske (Buton Gövdesi) */
+        .shine-btn::after {
+            content: '';
+            position: absolute;
+            inset: 2px; /* Parlayan sınırın kalınlığı */
+            background: #000000;
+            border-radius: calc(0.5rem - 2px); /* Eğimle eşleştir */
+            z-index: -1; /* Gradyanın üstünde, metnin arkasında */
+        }
+        
+        /* Animasyon Tetikleyici */
+        .shine-btn:hover::before {
+            opacity: 1;
+            animation: spin-shine 2.5s linear infinite;
+        }
+
+        @keyframes spin-shine {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* HERO DÜŞME ANİMASYONLARI */
+        .drop-icon {
+            opacity: 0; 
+            animation: dropIn 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes dropIn {
+            0% {
+                transform: translateY(-150vh) rotate(-45deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) rotate(var(--rotation));
+                opacity: 0.2; /* Son opaklık - ince arka plan */
+            }
+        }
+
+        /* DENEME KUTUSU ANİMASYONU */
+        .try-on-box {
+            opacity: 0; /* Başlangıçta gizli, JS animasyonu ile kontrol edilir */
+        }
+
+        @keyframes slideDownBox {
+            0% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-black antialiased selection:bg-black selection:text-white">
+
+    <!-- Navigasyon -->
+    <nav class="fixed w-full z-50 bg-black/90 backdrop-blur-md border-b border-white/10 text-white transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between relative">
+            
+            <!-- LOGO (Sol) -->
+            <a href="#" onclick="showPage('landing')" class="flex items-center gap-2 hover:opacity-80 transition-opacity duration-300 group z-20">
+                <div class="bg-white text-black p-1 rounded-md group-hover:bg-gray-200 transition-colors">
+                     <i data-lucide="scan-face" class="w-6 h-6"></i>
+                </div>
+                <span class="font-serif text-2xl font-black tracking-tighter">FYND.</span>
+            </a>
+            
+            <!-- MERKEZ BUTON: DENE -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                <button onclick="showPage('try-on')" class="bg-white text-black px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-gray-200 transition-all hover:scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                    <span class="text-sm tracking-wide">DENE</span>
+                    <i data-lucide="shirt" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- LİNKLER (Sağ) -->
+            <div class="hidden md:flex items-center gap-8 font-sans text-sm font-medium tracking-wide z-20">
+                <a href="#how-it-works" onclick="showPage('landing')" class="hover:underline underline-offset-4 decoration-1 hover:text-gray-300 transition-colors">ÖZELLİKLER</a>
+                <a href="#feed" onclick="showPage('landing')" class="hover:underline underline-offset-4 decoration-1 hover:text-gray-300 transition-colors">AKIŞ</a>
+                <a href="#faq" onclick="showPage('landing')" class="hover:underline underline-offset-4 decoration-1 hover:text-gray-300 transition-colors">SSS</a>
+            </div>
+
+            <!-- Mobil Menü -->
+            <button class="md:hidden z-20">
+                <i data-lucide="menu" class="text-white"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- AÇILIŞ SAYFASI İÇERİK SARMALAYICISI -->
+    <main id="landing-page" class="transition-opacity duration-500">
+        
+        <!-- Hero Bölümü -->
+        <section class="relative min-h-screen bg-black text-white flex flex-col justify-center items-center px-6 pt-20 overflow-hidden">
+            
+            <!-- Arka Plan Dokusu -->
+            <div class="absolute inset-0 opacity-20 pointer-events-none z-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+
+            <!-- DÜŞEN İKONLAR (Arka Plan Katmanı - Z-0) -->
+            <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                
+                <!-- Şort (Sol Üst) -->
+                <svg class="drop-icon w-32 h-32 absolute top-[15%] left-[10%]" style="--rotation: -25deg; animation-delay: 0.1s;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h16l-1 13h-5l-2-3-2 3H5L4 6z" />
+                    <path d="M4 6c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2" />
+                </svg>
+
+                <!-- Uzun Kollu Kazak (Sağ Üst) -->
+                <svg class="drop-icon w-40 h-40 absolute top-[18%] right-[10%]" style="--rotation: 15deg; animation-delay: 0.3s;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 3h10l5 10-2 1-3-6v13H7V8L4 14l-2-1L7 3z" />
+                    <path d="M7 3c0 3 5 3 10 0" />
+                </svg>
+
+                <!-- Tişört (Orta Sol, Metnin Arkası) -->
+                <svg class="drop-icon w-48 h-48 absolute top-[40%] left-[5%]" style="--rotation: -5deg; animation-delay: 0.5s;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.38 3.4a1.64 1.64 0 0 0-1.58-1h-2.13a6.56 6.56 0 0 1-9.34 0H5.2a1.64 1.64 0 0 0-1.58 1L2 8.5l4.5 1.5L6.5 22h11l0-12 4.5-1.5z"/>
+                </svg>
+
+                <!-- Gömlek (Sağ Alt) -->
+                <svg class="drop-icon w-44 h-44 absolute top-[50%] right-[8%]" style="--rotation: 10deg; animation-delay: 0.7s;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v16h18V6l-3-4H6Z"/>
+                    <path d="M6 2v10"/>
+                    <path d="M18 2v10"/>
+                    <path d="M12 2v20"/>
+                    <path d="M12 7h5"/>
+                    <path d="M12 12h5"/>
+                    <path d="M12 17h5"/>
+                    <path d="M9 2l3 3 3-3"/>
+                </svg>
+
+                <!-- Pantolon (Sol Alt) -->
+                <svg class="drop-icon w-40 h-40 absolute bottom-[5%] left-[20%]" style="--rotation: -10deg; animation-delay: 0.9s;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L4 22H10L12 10L14 22H20L18 2H6Z"/>
+                </svg>
+
+            </div>
+
+            <div class="max-w-5xl mx-auto text-center z-10 relative">
+                <div class="inline-flex items-center gap-2 border border-white/20 rounded-full px-4 py-1 mb-8 bg-black/50 backdrop-blur-sm">
+                    <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    <span class="text-xs tracking-[0.2em] font-medium uppercase">Tasarımıyla Sosyal</span>
+                </div>
+                
+                <h1 class="font-serif text-6xl md:text-8xl lg:text-9xl font-extrabold editorial-text mb-8 drop-shadow-2xl">
+                    Bul. Dene.<br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">İlham Ver.</span>
+                </h1>
+
+                <p class="font-sans text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-normal leading-relaxed drop-shadow-md">
+                    Önde gelen sosyal moda platformu. Herhangi bir fotoğrafı yükleyin, YZ ile kıyafetleri anında tanımlayın ve görünümü doğrudan satın alın.
+                </p>
+
+                <div class="flex justify-center items-center">
+                    <!-- ANİMASYONLU PARLAMA BUTONU -->
+                    <a href="#" class="shine-btn px-8 py-4 min-w-[240px] flex items-center justify-center gap-4 group">
+                        <!-- ÖNEMLİ: İç içerik, ::after maskesinin üzerinde kalmak için relative z-10 ile sarıldı -->
+                        <div class="relative z-10 flex items-center gap-4">
+                            <svg class="w-8 h-8 group-hover:scale-110 transition-transform fill-white" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 52.3-11.4 69.5-34.3z"/>
+                            </svg>
+                            <div class="text-left">
+                                <div class="text-[10px] uppercase tracking-widest opacity-60 font-bold text-white">İndirin</div>
+                                <div class="text-xl font-bold tracking-tight leading-none text-white">App Store</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-black to-transparent z-10"></div>
+        </section>
+
+        <!-- Özellikler (2. sıraya taşındı) - BEYAZ ARKA PLAN OLARAK DEĞİŞTİRİLDİ -->
+        <section id="how-it-works" class="py-24 bg-white text-black border-b border-black/5">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="mb-16">
+                    <h2 class="font-serif text-5xl md:text-6xl mb-8 font-bold leading-tight tracking-tight text-black">Özellikler.</h2>
+                    <p class="text-gray-600 max-w-md font-light text-lg">İlhamdan edinim sürecine. Tarzınızı sahiplenmeniz için tasarlanmış kusursuz bir araç paketi.</p>
+                </div>
+
+                <!-- GÜNCELLENMİŞ IZGARA: Beyaz Arka Plan Stili -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-l border-black/10">
+                    
+                    <!-- 1. Paylaş & Çek -->
+                    <div class="p-12 border-r border-b border-black/10 group hover:bg-black hover:text-white transition-colors duration-500 min-h-[320px] flex flex-col justify-between">
+                        <i data-lucide="camera" class="w-12 h-12 mb-6 text-black group-hover:text-white transition-colors duration-500"></i>
+                        <div>
+                            <h3 class="font-serif text-3xl font-bold mb-4">Paylaş & Çek</h3>
+                            <p class="text-base text-gray-500 group-hover:text-gray-300 leading-relaxed transition-colors duration-500">
+                                Moda yolculuğunuza başlamak için galeriden bir fotoğraf yükleyin, ekran görüntüsü alın veya doğrudan uygulama içinde yeni bir fotoğraf çekin.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 2. YZ Algılama & Link Çıkarma -->
+                    <div class="p-12 border-r border-b border-black/10 group hover:bg-black hover:text-white transition-colors duration-500 min-h-[320px] flex flex-col justify-between">
+                        <i data-lucide="scan-line" class="w-12 h-12 mb-6 text-black group-hover:text-white transition-colors duration-500"></i>
+                        <div>
+                            <h3 class="font-serif text-3xl font-bold mb-4">YZ Algılama & Link Çıkarma</h3>
+                            <p class="text-base text-gray-500 group-hover:text-gray-300 leading-relaxed transition-colors duration-500">
+                                Kumaşları ve desenleri anında tanımlayın, tam eşleşme veya en yakın alternatifler için otomatik olarak doğrudan satın alma linkleri oluşturun.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 3. Sanal Deneme -->
+                    <div class="p-12 border-r border-b border-black/10 group hover:bg-black hover:text-white transition-colors duration-500 min-h-[320px] flex flex-col justify-between">
+                        <i data-lucide="shirt" class="w-12 h-12 mb-6 text-black group-hover:text-white transition-colors duration-500"></i>
+                        <div>
+                            <h3 class="font-serif text-3xl font-bold mb-4">Sanal Deneme</h3>
+                            <p class="text-base text-gray-500 group-hover:text-gray-300 leading-relaxed transition-colors duration-500">
+                                Satın almadan önce görün. Artırılmış gerçeklik ayna teknolojimizle kıyafetlerin üzerinizde nasıl durduğunu görselleştirin.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 4. İlham & Gardırop -->
+                    <div class="p-12 border-r border-b border-black/10 group hover:bg-black hover:text-white transition-colors duration-500 min-h-[320px] flex flex-col justify-between">
+                        <i data-lucide="layers" class="w-12 h-12 mb-6 text-black group-hover:text-white transition-colors duration-500"></i>
+                        <div>
+                            <h3 class="font-serif text-3xl font-bold mb-4">İlham & Gardırop</h3>
+                            <p class="text-base text-gray-500 group-hover:text-gray-300 leading-relaxed transition-colors duration-500">
+                                Tarzınızı paylaşmak, trendleri keşfetmek ve bulduklarınızı birleşik bir dijital dolapta organize etmek için küresel bir topluluğa katılın.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- YZ Demo (3. sıraya taşındı) - SİYAH ARKA PLAN OLARAK DEĞİŞTİRİLDİ -->
+        <section id="demo" class="py-24 bg-black text-white overflow-hidden">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row items-center gap-16">
+                    <div class="w-full md:w-1/2 relative">
+                        <div class="relative w-full aspect-[3/4] overflow-hidden border border-white/20 rounded-2xl">
+                            <img src="https://images.unsplash.com/photo-1550614000-4b9519e494b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Moda Taraması" class="w-full h-full object-cover grayscale opacity-80">
+                            <!-- Siyah arka plan için beyaz tarama çizgisi -->
+                            <div class="absolute left-0 w-full h-0.5 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] animate-scan z-10"></div>
+                            
+                            <!-- Karanlık mod düğümleri -->
+                            <div class="absolute top-[30%] left-[45%]">
+                                <div class="relative">
+                                    <div class="w-3 h-3 bg-white rounded-full animate-ping absolute"></div>
+                                    <div class="w-3 h-3 bg-white rounded-full relative z-20"></div>
+                                    <div class="absolute left-6 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur border border-white/20 px-3 py-1 text-xs whitespace-nowrap font-bold rounded shadow-lg text-white">YÜN TRENÇKOT</div>
+                                </div>
+                            </div>
+                            <div class="absolute top-[65%] left-[35%]">
+                                <div class="relative">
+                                    <div class="w-3 h-3 bg-white rounded-full animate-ping absolute animation-delay-500"></div>
+                                    <div class="w-3 h-3 bg-white rounded-full relative z-20"></div>
+                                    <div class="absolute right-6 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur border border-white/20 px-3 py-1 text-xs whitespace-nowrap font-bold rounded shadow-lg text-white">DERİ ÇANTA</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="h-px w-12 bg-white"></div>
+                            <span class="text-xs tracking-widest uppercase font-bold text-white">Akıllı Görüş</span>
+                        </div>
+                        <h2 class="font-serif text-5xl md:text-6xl mb-6 leading-none font-bold tracking-tight text-white">Her Şeyi <br/>Tanımla.</h2>
+                        <p class="text-gray-400 font-light text-lg mb-8 leading-relaxed">
+                            "Yükle → Algıla → Satın Al" iş akışı, stille etkileşiminizi yeniden tanımlıyor. 
+                            Bulanık bir sokak fotoğrafı veya dergi taraması olması fark etmez. <span class="text-white font-bold">Görebiliyorsanız, Fynd ile bulabilirsiniz.</span>
+                        </p>
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <div class="p-2 border border-white/20 rounded-full mt-1">
+                                    <i data-lucide="scan-line" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-serif text-xl font-bold text-white">Anında Tanıma</h4>
+                                    <p class="text-sm text-gray-400 mt-1">Gelişmiş sinir ağları ile desteklenen sorunsuz algılama.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="p-2 border border-white/20 rounded-full mt-1">
+                                    <i data-lucide="layers" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-serif text-xl font-bold text-white">Kapsamlı Katalog</h4>
+                                    <p class="text-sm text-gray-400 mt-1">Lüks, sokak giyimi ve vintage ürünleri kapsayan küresel veritabanı.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Akış -->
+        <section id="feed" class="py-24 bg-off-white">
+            <div class="max-w-7xl mx-auto px-6 text-center mb-16">
+                <h2 class="font-serif text-4xl md:text-5xl mb-4 font-bold tracking-tight">Akış</h2>
+                <p class="text-gray-500 font-sans tracking-wide text-sm font-semibold">TOPLULUK TARAFINDAN DERLENDİ</p>
+            </div>
+            <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Akış Öğesi 1 -->
+                <div class="bg-white p-4 border border-black/5 shadow-sm hover:shadow-xl transition-shadow duration-300 rounded-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-black"></div>
+                        <span class="text-sm font-bold tracking-wide">elena_wears</span>
+                    </div>
+                    <div class="fashion-img-container relative overflow-hidden aspect-[4/5] mb-4 group cursor-pointer rounded-lg">
+                        <img src="https://images.unsplash.com/photo-1550136675-9e763177656f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kombin 1" class="w-full h-full object-cover fashion-img">
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <div class="bg-white text-black px-4 py-2 text-xs font-bold tracking-widest uppercase transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 rounded">Görünümü Al</div>
+                        </div>
+                        <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2 ai-tag">
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Pileli Etek</span>
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Kısa Blazer</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex gap-4">
+                            <i data-lucide="heart" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                            <i data-lucide="message-circle" class="w-5 h-5 cursor-pointer"></i>
+                        </div>
+                        <i data-lucide="bookmark" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                    </div>
+                </div>
+                <!-- Akış Öğesi 2 -->
+                <div class="bg-white p-4 border border-black/5 shadow-sm hover:shadow-xl transition-shadow duration-300 md:-mt-8 rounded-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-gray-800"></div>
+                        <span class="text-sm font-bold tracking-wide">markus_stylist</span>
+                    </div>
+                    <div class="fashion-img-container relative overflow-hidden aspect-[4/5] mb-4 group cursor-pointer rounded-lg">
+                        <img src="https://images.unsplash.com/photo-1549488497-2792694b872c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kombin 2" class="w-full h-full object-cover fashion-img">
+                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <div class="bg-white text-black px-4 py-2 text-xs font-bold tracking-widest uppercase transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 rounded">Görünümü Al</div>
+                        </div>
+                         <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2 ai-tag">
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Büyük Beden Tişört</span>
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Kargo Pantolon</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex gap-4">
+                            <i data-lucide="heart" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                            <i data-lucide="message-circle" class="w-5 h-5 cursor-pointer"></i>
+                        </div>
+                        <i data-lucide="bookmark" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                    </div>
+                </div>
+                <!-- Akış Öğesi 3 -->
+                <div class="bg-white p-4 border border-black/5 shadow-sm hover:shadow-xl transition-shadow duration-300 rounded-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full bg-gray-600"></div>
+                        <span class="text-sm font-bold tracking-wide">soho_editor</span>
+                    </div>
+                    <div class="fashion-img-container relative overflow-hidden aspect-[4/5] mb-4 group cursor-pointer rounded-lg">
+                        <img src="https://images.unsplash.com/photo-1583209814683-c023dd293cc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kombin 3" class="w-full h-full object-cover fashion-img">
+                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <div class="bg-white text-black px-4 py-2 text-xs font-bold tracking-widest uppercase transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 rounded">Görünümü Al</div>
+                        </div>
+                         <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2 ai-tag">
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Kaşmir Kazak</span>
+                            <span class="bg-black/90 text-white text-[10px] px-2 py-1 uppercase tracking-wider font-bold rounded">Altın Zincir</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex gap-4">
+                            <i data-lucide="heart" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                            <i data-lucide="message-circle" class="w-5 h-5 cursor-pointer"></i>
+                        </div>
+                        <i data-lucide="bookmark" class="w-5 h-5 cursor-pointer hover:fill-black transition-colors"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SSS -->
+        <section id="faq" class="py-32 bg-white flex flex-col items-center justify-center px-6 border-b border-black/5">
+            <div class="max-w-3xl w-full text-center mb-16">
+                <h2 class="font-serif text-5xl md:text-6xl mb-6 font-extrabold tracking-tight">SSS</h2>
+                <p class="font-sans text-gray-500 text-lg">Modanın geleceği hakkında sıkça sorulan sorular.</p>
+            </div>
+            <div class="max-w-3xl w-full space-y-4">
+                <div class="faq-item border-b border-black/10 pb-4">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none group">
+                        <span class="font-serif text-2xl font-bold hover:text-gray-600 transition-colors">FYND kullanmak ücretsiz mi?</span>
+                        <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300 group-hover:rotate-90"></i>
+                    </button>
+                    <div class="faq-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out opacity-0">
+                        <p class="text-gray-600 text-lg font-light pb-4 leading-relaxed">Evet, FYND kullanıcıların indirip keşfetmesi için tamamen ücretsizdir.</p>
+                    </div>
+                </div>
+                <div class="faq-item border-b border-black/10 pb-4">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none group">
+                        <span class="font-serif text-2xl font-bold hover:text-gray-600 transition-colors">YZ algılama ne kadar doğru?</span>
+                        <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300 group-hover:rotate-90"></i>
+                    </button>
+                    <div class="faq-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out opacity-0">
+                        <p class="text-gray-600 text-lg font-light pb-4 leading-relaxed">Algoritmamız şu anda %98.4 doğruluk oranına sahiptir.</p>
+                    </div>
+                </div>
+                <div class="faq-item border-b border-black/10 pb-4">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none group">
+                        <span class="font-serif text-2xl font-bold hover:text-gray-600 transition-colors">Uygulama içinden direkt satın alabilir miyim?</span>
+                        <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300 group-hover:rotate-90"></i>
+                    </button>
+                    <div class="faq-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out opacity-0">
+                        <p class="text-gray-600 text-lg font-light pb-4 leading-relaxed">Kesinlikle. 12,000'den fazla büyük perakendeci ile entegrasyonumuz bulunmaktadır.</p>
+                    </div>
+                </div>
+                <div class="faq-item border-b border-black/10 pb-4">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none group">
+                        <span class="font-serif text-2xl font-bold hover:text-gray-600 transition-colors">Nasıl içerik üreticisi olurum?</span>
+                        <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300 group-hover:rotate-90"></i>
+                    </button>
+                    <div class="faq-content overflow-hidden max-h-0 transition-all duration-500 ease-in-out opacity-0">
+                        <p class="text-gray-600 text-lg font-light pb-4 leading-relaxed">İçerik üreticisi programımız şu anda beta aşamasındadır.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alt Bilgi -->
+        <footer class="bg-black text-white py-16 border-t border-white/10">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
+                    <div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-8 h-8 rounded bg-white flex items-center justify-center text-black">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3z"/><path d="M3 8h18l-2 13H5L3 8z"/><path d="M12 8v5"/></svg>
+                            </div>
+                            <span class="font-serif text-2xl font-bold">Fynd.</span>
+                        </div>
+                        <p class="text-gray-500 text-sm max-w-xs">Yapay zeka ve yüksek modanın kesişim noktası.</p>
+                    </div>
+                    <!-- Alt Bilgi Linkleri -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-12 md:gap-24">
+                        <div>
+                            <h4 class="font-serif text-lg font-bold mb-4">Platform</h4>
+                            <ul class="space-y-2 text-sm text-gray-500 font-medium">
+                                <li><a href="#" class="hover:text-white transition-colors">Nasıl Çalışır</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">İçerik Üreticileri</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Fiyatlandırma</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">İndir</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-serif text-lg font-bold mb-4">Şirket</h4>
+                            <ul class="space-y-2 text-sm text-gray-500 font-medium">
+                                <li><a href="#" class="hover:text-white transition-colors">Hakkında</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Kariyer</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Basın</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">İletişim</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-serif text-lg font-bold mb-4">Yasal</h4>
+                            <ul class="space-y-2 text-sm text-gray-500 font-medium">
+                                <li><a href="#" class="hover:text-white transition-colors">Gizlilik</a></li>
+                                <li><a href="#" class="hover:text-white transition-colors">Şartlar</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p class="text-xs text-gray-600">© 2024 FYND Technologies Inc. Tüm hakları saklıdır.</p>
+                    <div class="flex gap-6">
+                        <i data-lucide="instagram" class="w-5 h-5 text-gray-500 hover:text-white transition-colors cursor-pointer"></i>
+                        <i data-lucide="twitter" class="w-5 h-5 text-gray-500 hover:text-white transition-colors cursor-pointer"></i>
+                        <i data-lucide="linkedin" class="w-5 h-5 text-gray-500 hover:text-white transition-colors cursor-pointer"></i>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- DENEME SAYFASI (Başlangıçta Gizli) -->
+    <!-- DÜZELTME: Z-index 60'a yükseltildi, böylece z-50 navbar'ın üzerinde görünür -->
+    <section id="try-on-page" class="fixed inset-0 z-[60] bg-black text-white hidden flex flex-col items-center justify-center">
+        
+        <!-- Estetik Ana Sayfaya Dön Butonu -->
+        <button onclick="showPage('landing')" class="absolute top-8 left-6 md:top-12 md:left-12 flex items-center gap-3 group z-50 focus:outline-none">
+            <div class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:border-white transition-all duration-500 ease-out">
+                <i data-lucide="arrow-left" class="w-5 h-5 text-white group-hover:text-black transition-colors duration-300"></i>
+            </div>
+            <span class="text-xs font-bold tracking-[0.2em] uppercase text-white/40 group-hover:text-white transition-colors duration-500">Ana Sayfaya Dön</span>
+        </button>
+
+        <div class="max-w-5xl w-full px-6 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+            
+            <!-- Kutu 1: Kıyafet Öğesi -->
+            <div class="try-on-box aspect-square border border-white/20 rounded-2xl p-8 flex flex-col justify-center items-center hover:border-white/50 transition-colors">
+                <h3 class="font-serif text-3xl font-bold mb-8 text-center">Kıyafet</h3>
+                <div class="flex flex-col gap-4 w-full max-w-xs">
+                    <button class="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
+                        <i data-lucide="upload" class="w-5 h-5"></i>
+                        FOTOĞRAF YÜKLE
+                    </button>
+                    <button class="border border-white/30 text-white px-6 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-3">
+                        <i data-lucide="link" class="w-5 h-5"></i>
+                        LİNK YAPIŞTIR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kutu 2: Senin Fotoğrafın -->
+            <div class="try-on-box aspect-square border border-white/20 rounded-2xl p-8 flex flex-col justify-center items-center hover:border-white/50 transition-colors">
+                <h3 class="font-serif text-3xl font-bold mb-8 text-center">Senin Fotoğrafın</h3>
+                <div class="flex flex-col gap-4 w-full max-w-xs">
+                    <button class="bg-white text-black px-6 py-4 rounded-lg font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-3">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        FOTOĞRAF YÜKLE
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <script>
+        // İkonları Başlat - DOM'u bekle
+        document.addEventListener("DOMContentLoaded", function() {
+            lucide.createIcons();
+            
+            // SSS Mantığı
+            const faqItems = document.querySelectorAll('.faq-item button');
+            
+            faqItems.forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('i');
+                    const isExpanded = content.style.maxHeight;
+
+                    // Diğerlerini kapat (Akordeon davranışı)
+                    document.querySelectorAll('.faq-content').forEach(el => {
+                        el.style.maxHeight = null;
+                        el.classList.remove('opacity-100');
+                        el.classList.add('opacity-0');
+                    });
+                    document.querySelectorAll('.faq-item button i').forEach(el => {
+                        el.style.transform = 'rotate(0deg)';
+                    });
+
+                    // Mevcut olanı aç/kapat
+                    if (!isExpanded) {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        content.classList.remove('opacity-0');
+                        content.classList.add('opacity-100');
+                        icon.style.transform = 'rotate(45deg)'; // + işaretini x'e çevir
+                    }
+                });
+            });
+        });
+
+        // Kaydırma sırasında ortaya çıkma animasyonları
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-1000');
+        });
+
+        // SAYFA NAVİGASYON MANTIĞI
+        function showPage(pageId) {
+            const landingPage = document.getElementById('landing-page');
+            const tryOnPage = document.getElementById('try-on-page');
+            const tryOnBoxes = document.querySelectorAll('.try-on-box');
+            const dropIcons = document.querySelectorAll('.drop-icon'); // İkonları seç
+
+            if (pageId === 'try-on') {
+                landingPage.classList.add('hidden');
+                tryOnPage.classList.remove('hidden');
+                
+                // Deneme kutularını canlandır
+                tryOnBoxes.forEach((box, index) => {
+                    box.style.animation = 'none';
+                    box.offsetHeight; 
+                    box.style.animation = `slideDownBox 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards ${index * 0.15}s`;
+                });
+            } else {
+                tryOnPage.classList.add('hidden');
+                landingPage.classList.remove('hidden');
+
+                // Açılış Sayfası Düşen İkonlarını Canlandır
+                dropIcons.forEach((icon) => {
+                    // Yöntem: Animasyon 'none' -> yeniden akış -> null
+                    icon.style.animation = 'none';
+                    void icon.offsetWidth; // Yeniden akışı tetikle
+                    icon.style.animation = ''; // CSS sınıf kuralına geri dön
+                });
+            }
+            // Her ihtimale karşı ikonları yeniden başlat
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+    </script>
+</body>
+</html>
